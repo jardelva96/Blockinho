@@ -45,27 +45,41 @@ Executar no modo dev
 🧰 Artefatos de build
 1) Fat-JAR (tudo em um)
 Gera build/libs/blockinho-<versão>-all.jar:
+```bash
 
 ./gradlew clean fatJar
+```
 Executar:
+```bash
 
 java -jar build/libs/blockinho-1.0.0-all.jar
+```
+
 2) App “portável” (app-image)
+
 Gera build/jpackage/DockNotas/ com executável e runtime:
+```bash
 
 ./gradlew jpackageImage
+```
 3) Instalador (MSI/EXE/DMG/DEB)
 Windows: MSI requer WiX (candle.exe/light.exe) no PATH.
 Sem WiX, gere EXE:
 
 # MSI (com WiX)
-./gradlew jpackageInstaller
+```bash
 
+./gradlew jpackageInstaller
+```
 # EXE (sem WiX)
+```bash
+
 ./gradlew jpackageInstaller -PinstallerType=exe
+```
 Artefatos ficam em build/jpackage/.
 
 Comando direto (Windows, EXE sem WiX)
+```bash
 
 jpackage `
   --type exe `
@@ -77,12 +91,14 @@ jpackage `
   --dest build\jpackage `
   --app-version 1.0.0 `
   --icon src\main\resources\icons\app.ico
+```
 Se um console abrir, use o executável gerado pelo jpackage/instalador (sem console por padrão).
 
 ⚙️ Preferências & Persistência
 Arquivos salvos em ~/.docknotas/ (Windows: C:\Users\<Você>\.docknotas\):
 
 settings.properties – preferências (tema, fonte, zoom, tamanho…)
+```bash
 
 notes.txt – conteúdo das notas
 
@@ -101,8 +117,10 @@ zoomPercent: 50..200
 priorityColor: vermelho|laranja|amarelo|verde|azul|roxo|cinza
 
 colorStrengthPercent: 40..100
-
+```
 ⌨️ Atalhos
+```bash
+
 Salvar: Ctrl+S
 
 Zoom: slider inferior ou View → Zoom (%)
@@ -110,7 +128,7 @@ Zoom: slider inferior ou View → Zoom (%)
 Tema: View → Theme
 
 Fonte/Espaçamento: View → Font (base) e Line spacing
-
+```
 🧩 Estrutura do projeto
 ```bash
 src/
