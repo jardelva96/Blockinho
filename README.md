@@ -165,18 +165,6 @@ Alternativa simples: gere EXE com -PinstallerType=exe.
 Acentos/encoding na compilação
 Garanta UTF-8 no IDE/arquivos. O Gradle já compila em UTF-8.
 
-🏷️ Publicando uma Release (GitHub)
-Gere artefatos (fatJar / jpackage).
-
-Crie tag semântica:
-
-git tag -a v1.0.0 -m "Primeira versão"
-git push origin v1.0.0
-Em Releases → New release, selecione a tag v1.0.0,
-preencha o título/notas e anexe DockNotas.exe (e/ou MSI/DMG/DEB).
-
-Publish release.
-
 🤝 Contribuindo
 Fork
 
