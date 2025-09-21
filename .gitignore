@@ -1,0 +1,10 @@
+﻿.gradle/
+build/
+out/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+*.exe
+*.msi
+*.zip

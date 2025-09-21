@@ -1,0 +1,136 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.jardel'
+version = '1.0.0'
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+}
+
+// <<< ajuste seu main aqui >>>
+application {
+    mainClass = 'org.docknotas.App'
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    implementation 'com.formdev:flatlaf:3.4.1'
+    implementation 'com.formdev:flatlaf-intellij-themes:3.4.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+// Força UTF-8 para evitar erros de acentuação
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Test).configureEach { useJUnitPlatform() }
+
+/* ---------- CONFIG DO APP / ÍCONES ---------- */
+ext {
+    appName   = 'DockNotas'
+    appVendor = 'Jardel'
+    appIconWin = "${projectDir}/src/main/resources/icons/app.ico"
+    appIconMac = "${projectDir}/src/main/resources/icons/app.icns"
+    appIconLin = "${projectDir}/src/main/resources/icons/app.png"
+}
+
+/* ---------- FAT JAR ---------- */
+tasks.register('fatJar', Jar) {
+    archiveClassifier = 'all'
+    from sourceSets.main.output
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // resolve o mainClass como String
+    manifest { attributes 'Main-Class': application.mainClass.get() }
+
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath
+                .filter { it.name.endsWith('jar') }
+                .collect { zipTree(it) }
+    }
+}
+
+/* ---------- JPACKAGE: APP-IMAGE (portável) ---------- */
+tasks.register('jpackageImage', Exec) {
+    dependsOn 'fatJar'
+    doFirst {
+        def outDir = "${buildDir}/jpackage"
+        file(outDir).mkdirs()
+
+        def jar = tasks.named('fatJar').get().archiveFile.get().asFile
+        def mainCls = application.mainClass.get()
+
+        def args = [
+                'jpackage',
+                '--type', 'app-image',
+                '--name', appName,
+                '--vendor', appVendor,
+                '--input', jar.parent,
+                '--main-jar', jar.name,
+                '--main-class', mainCls,
+                '--dest', outDir,
+                '--app-version', project.version,
+                // garante módulos necessários do Swing/AWT no runtime
+                '--add-modules', 'java.desktop,java.datatransfer',
+                '--verbose'
+        ]
+
+        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+            // mostra console para logs ao executar o .exe
+            if (file(appIconWin).exists()) args += ['--icon', appIconWin]
+        } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+            if (file(appIconMac).exists()) args += ['--icon', appIconMac]
+        } else {
+            if (file(appIconLin).exists()) args += ['--icon', appIconLin]
+        }
+
+        commandLine args
+    }
+}
+
+/* ---------- JPACKAGE: INSTALADOR (MSI/DMG/DEB) ---------- */
+tasks.register('jpackageInstaller', Exec) {
+    dependsOn 'fatJar'
+    doFirst {
+        def outDir = "${buildDir}/jpackage"
+        file(outDir).mkdirs()
+
+        def jar = tasks.named('fatJar').get().archiveFile.get().asFile
+        def mainCls = application.mainClass.get()
+
+        def os = org.gradle.internal.os.OperatingSystem.current()
+        def type = os.isWindows() ? 'msi' : (os.isMacOsX() ? 'dmg' : 'deb')
+
+        def args = [
+                'jpackage',
+                '--type', type,
+                '--name', appName,
+                '--vendor', appVendor,
+                '--input', jar.parent,
+                '--main-jar', jar.name,
+                '--main-class', mainCls,
+                '--dest', outDir,
+                '--app-version', project.version,
+                '--add-modules', 'java.desktop,java.datatransfer',
+                '--verbose'
+        ]
+
+        if (os.isWindows()) {
+            if (file(appIconWin).exists()) args += ['--icon', appIconWin]
+            args += ['--win-menu', '--win-shortcut', '--win-dir-chooser']
+            // Para MSI é preciso ter WiX Toolset (candle.exe/light.exe) no PATH
+        } else if (os.isMacOsX()) {
+            if (file(appIconMac).exists()) args += ['--icon', appIconMac]
+        } else {
+            if (file(appIconLin).exists()) args += ['--icon', appIconLin]
+            args += ['--linux-shortcut', '--linux-menu-group', 'Utilities']
+        }
+
+        commandLine args
+    }
+}
