@@ -185,9 +185,9 @@ public class DockBar {
             px = atRight ? b.x - notes.getWidth() - 8 : b.x + bar.getWidth() + 8;
             py = clamp(s.y + in.top + 8, b.y, s.y + s.height - notes.getHeight() - in.bottom - 8);
         } else {
-            boolean bottom = b.y + bar.getHeight() > s.y + s.height - 60 - in.bottom;
             px = clamp(s.x + in.left + 8, b.x, s.x + s.width - notes.getWidth() - in.right - 8);
-            py = bottom ? b.y - notes.getHeight() - 8 : b.y + bar.getHeight() + 8;
+            py = Math.min(s.y + s.height - in.bottom - notes.getHeight() - 8, b.y + bar.getHeight() + 8);
+            py = Math.max(s.y + in.top + 8, py);
         }
         notes.setLocation(px, py);
     }

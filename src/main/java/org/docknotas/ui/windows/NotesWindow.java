@@ -261,14 +261,8 @@ public class NotesWindow extends JFrame {
             pg.add(it); pri.add(it);
         }
 
-        JMenu intensidade = new JMenu("Intensity (%)");
-        styleMenu(intensidade, colors);
-        intensidade.add(item("+10%", () -> { settings.setColorStrengthPercent(Math.min(100, settings.getColorStrengthPercent()+10)); Storage.saveSettings(settings); repaint(); }));
-        intensidade.add(item("-10%", () -> { settings.setColorStrengthPercent(Math.max(40, settings.getColorStrengthPercent()-10)); Storage.saveSettings(settings); repaint(); }));
-        intensidade.add(item("Reset (100%)", () -> { settings.setColorStrengthPercent(100); Storage.saveSettings(settings); repaint(); }));
-
         mb.add(pri);
-        mb.add(intensidade);
+        // intensidade removida do menu para reduzir largura
 
         // HELP
         JMenu help = new JMenu("Help");
@@ -279,7 +273,12 @@ public class NotesWindow extends JFrame {
                 • View → Font/Zoom/Line spacing
                 • Priority/Color: define faixa/borda
                 """)));
-        help.add(item("About", () -> info("DockNotas — janela única com menu + editor")));
+        help.add(item("About", () -> info("""
+                DockNotas — bloco rápido com barrinha acoplável e editor de notas.
+
+                Desenvolvido por Jardel Vieira Alves.
+                Todos os direitos reservados.
+                """)));
         mb.add(help);
 
         return mb;

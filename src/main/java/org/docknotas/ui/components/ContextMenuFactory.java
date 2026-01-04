@@ -111,12 +111,6 @@ public class ContextMenuFactory {
         }
         cfg.add(prioridade);
 
-        JMenu intensidade = theMenu("Intensidade da cor (%)", colors);
-        intensidade.add(mi("+10%", colors, () -> { settings.setColorStrengthPercent(Math.min(100, settings.getColorStrengthPercent()+10)); Storage.saveSettings(settings); }));
-        intensidade.add(mi("-10%", colors, () -> { settings.setColorStrengthPercent(Math.max(40,  settings.getColorStrengthPercent()-10)); Storage.saveSettings(settings); }));
-        intensidade.add(mi("Reset (100%)", colors, () -> { settings.setColorStrengthPercent(100); Storage.saveSettings(settings); }));
-        cfg.add(intensidade);
-
         menu.add(cfg);
 
         // AJUDA
