@@ -56,8 +56,11 @@ public class DockBar {
         bar.pack();
 
         // posição inicial
-        if (settings.getBarLocation() != null) bar.setLocation(settings.getBarLocation());
-        else positionNearTaskbar();
+        if (settings.getBarLocation() != null) {
+            bar.setLocation(settings.getBarLocation());
+        } else {
+            positionTopCenter();
+        }
 
         setOrientation(settings.getBarOrientation());
         hookMouse();
@@ -213,10 +216,10 @@ public class DockBar {
         }
     }
 
-    private void positionNearTaskbar() {
+    private void positionTopCenter() {
         Rectangle s = screenBounds(); Insets in = screenInsets();
-        int x = s.x + s.width - sizeH.width - 12 - in.right;
-        int y = s.y + s.height - sizeH.height - 12 - in.bottom;
+        int x = s.x + (s.width - sizeH.width) / 2;
+        int y = s.y + in.top + 6;
         bar.setLocation(x, y);
         settings.setBarLocation(new Point(x,y));
         Storage.saveSettings(settings);

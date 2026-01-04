@@ -64,9 +64,9 @@ public class NotesWindow extends JFrame {
 
         // comportamento básico
         setAlwaysOnTop(settings.isAlwaysOnTop());
-        setMinimumSize(new Dimension(340, 320));
+        setMinimumSize(new Dimension(260, 200));
         Dimension saved = settings.getNotePopupSize();
-        if (saved != null) setSize(saved); else setSize(360, 360);
+        if (saved != null) setSize(saved); else setSize(320, 200);
         updateWindowShape();
 
         // MENU
@@ -96,7 +96,7 @@ public class NotesWindow extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 // corpo
-                Color body = isDarkTheme() ? new Color(17,20,24,230) : new Color(250,250,250,245);
+                Color body = isDarkTheme() ? new Color(20,23,28) : new Color(250,250,250);
                 g2.setColor(body);
                 g2.fillRoundRect(0,0,getWidth(),getHeight(),14,14);
 
@@ -116,7 +116,7 @@ public class NotesWindow extends JFrame {
                 g2.dispose();
             }
         };
-        card.setOpaque(false);
+        card.setOpaque(true);
         card.setBorder(new EmptyBorder(10,10,10,10));
 
         JScrollPane sc = new JScrollPane(editor);
@@ -324,15 +324,14 @@ public class NotesWindow extends JFrame {
         UiTheme.applyLookAndFeel(theme);
         UiTheme.MenuColors colors = UiTheme.menuColors(theme);
         boolean dark = UiTheme.isDark(theme);
-        if (dark) {
-            editor.setBackground(new Color(0x111418));
-            editor.setForeground(new Color(0xE8E8E8));
-        } else {
-            editor.setBackground(new Color(0xFAFAFA));
-            editor.setForeground(Color.DARK_GRAY);
-        }
+        Color editorBg = dark ? new Color(0x15181D) : new Color(0xFAFAFA);
+        Color editorFg = dark ? new Color(0xE8E8E8) : Color.DARK_GRAY;
+        editor.setBackground(editorBg);
+        editor.setForeground(editorFg);
         editor.repaint();
-        getContentPane().setBackground(dark ? new Color(12,14,18) : new Color(240,242,245));
+
+        Color panelBg = dark ? new Color(20,23,28) : new Color(240,242,245);
+        getContentPane().setBackground(panelBg);
         restyleMenuBar(colors);
         SwingUtilities.updateComponentTreeUI(this);
         repaint();
