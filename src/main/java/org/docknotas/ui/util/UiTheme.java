@@ -1,31 +1,59 @@
 package org.docknotas.ui.util;
 
-import java.awt.*;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
+import java.awt.*;
 
 /** Centraliza cores/estilos e corrige hover de menu. */
 public class UiTheme {
-    public static final Color MENU_BG     = new Color(20,23,28,235);
-    public static final Color MENU_FG     = new Color(235,235,240);
-    public static final Color MENU_BORDER = new Color(70,70,80);
 
-    private static boolean hoverAppliedOnce = false;
+    /** Paleta completa para menus. */
+    public record MenuColors(Color background, Color foreground, Color border,
+                             Color selectionBackground, Color selectionForeground) {}
 
-    public static void applyGlobalMenuHoverTheme() {
-        if (hoverAppliedOnce) return;
-        hoverAppliedOnce = true;
+    private static MenuColors lastMenuColors = null;
 
-        Color bgSel = new Color(45,50,58);
-        Color fgSel = new Color(240,240,245);
+    public static boolean isDark(String theme) {
+        return theme == null || !"light".equalsIgnoreCase(theme);
+    }
 
-        UIManager.put("Menu.selectionBackground", bgSel);
-        UIManager.put("Menu.selectionForeground", fgSel);
-        UIManager.put("MenuItem.selectionBackground", bgSel);
-        UIManager.put("MenuItem.selectionForeground", fgSel);
-        UIManager.put("CheckBoxMenuItem.selectionBackground", bgSel);
-        UIManager.put("CheckBoxMenuItem.selectionForeground", fgSel);
-        UIManager.put("RadioButtonMenuItem.selectionBackground", bgSel);
-        UIManager.put("RadioButtonMenuItem.selectionForeground", fgSel);
+    public static MenuColors menuColors(String theme) {
+        boolean dark = isDark(theme);
+        Color bg = dark ? new Color(20, 23, 28, 235) : new Color(250, 250, 252, 240);
+        Color fg = dark ? new Color(235, 235, 240) : new Color(24, 24, 28);
+        Color border = dark ? new Color(70, 70, 80) : new Color(210, 210, 220);
+        Color selBg = dark ? new Color(45, 50, 58) : new Color(225, 230, 240);
+        Color selFg = dark ? new Color(240, 240, 245) : new Color(24, 24, 28);
+        return new MenuColors(bg, fg, border, selBg, selFg);
+    }
+
+    /** Ajusta o L&F e recolore hovers de menus conforme o tema. */
+    public static void applyLookAndFeel(String theme) {
+        if (isDark(theme)) {
+            FlatDarkLaf.setup();
+        } else {
+            FlatLightLaf.setup();
+        }
+        applyGlobalMenuHoverTheme(theme);
+        FlatLaf.updateUI();
+    }
+
+    public static void applyGlobalMenuHoverTheme(String theme) {
+        MenuColors colors = menuColors(theme);
+        if (colors.equals(lastMenuColors)) return;
+        lastMenuColors = colors;
+
+        UIManager.put("Menu.selectionBackground", colors.selectionBackground());
+        UIManager.put("Menu.selectionForeground", colors.selectionForeground());
+        UIManager.put("MenuItem.selectionBackground", colors.selectionBackground());
+        UIManager.put("MenuItem.selectionForeground", colors.selectionForeground());
+        UIManager.put("CheckBoxMenuItem.selectionBackground", colors.selectionBackground());
+        UIManager.put("CheckBoxMenuItem.selectionForeground", colors.selectionForeground());
+        UIManager.put("RadioButtonMenuItem.selectionBackground", colors.selectionBackground());
+        UIManager.put("RadioButtonMenuItem.selectionForeground", colors.selectionForeground());
     }
 
     public static Color headerColor() {

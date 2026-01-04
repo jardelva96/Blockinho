@@ -3,6 +3,7 @@ package org.docknotas.ui.windows;
 import org.docknotas.settings.AppSettings;
 import org.docknotas.storage.Storage;
 import org.docknotas.ui.components.LineRuledTextArea;
+import org.docknotas.ui.util.UiTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -162,10 +163,14 @@ public class NotesWindow extends JFrame {
     /* ===================== Menu ===================== */
 
     private JMenuBar buildMenuBar() {
+        UiTheme.MenuColors colors = UiTheme.menuColors(settings.getTheme());
         JMenuBar mb = new JMenuBar();
+        mb.setOpaque(true);
+        mb.setBackground(colors.background());
 
         // FILE
         JMenu file = new JMenu("File");
+        styleMenu(file, colors);
         file.add(item("New (clear)", () -> {
             if (confirm("Clear current notes?")) {
                 editor.setText("");
@@ -187,11 +192,15 @@ public class NotesWindow extends JFrame {
 
         // VIEW
         JMenu view = new JMenu("View");
+        styleMenu(view, colors);
 
         JMenu theme = new JMenu("Theme");
+        styleMenu(theme, colors);
         ButtonGroup tg = new ButtonGroup();
         JRadioButtonMenuItem dark  = new JRadioButtonMenuItem("Dark",  isDarkTheme());
         JRadioButtonMenuItem light = new JRadioButtonMenuItem("Light", !isDarkTheme());
+        styleMenuItem(dark, colors);
+        styleMenuItem(light, colors);
         tg.add(dark); tg.add(light);
         theme.add(dark); theme.add(light);
         dark.addActionListener(e -> { settings.setTheme("dark");  applyTheme("dark");  Storage.saveSettings(settings); });
@@ -199,22 +208,26 @@ public class NotesWindow extends JFrame {
         view.add(theme);
 
         JMenu fonte = new JMenu("Font (base)");
+        styleMenu(fonte, colors);
         fonte.add(item("Increase", () -> { settings.setFontSize(settings.getFontSize()+1); applyFontSize(settings.getFontSize()); Storage.saveSettings(settings);} ));
         fonte.add(item("Decrease", () -> { settings.setFontSize(Math.max(10, settings.getFontSize()-1)); applyFontSize(settings.getFontSize()); Storage.saveSettings(settings);} ));
         view.add(fonte);
 
         JMenu zoom = new JMenu("Zoom (%)");
+        styleMenu(zoom, colors);
         zoom.add(item("+10%", () -> applyZoom(settings.getZoomPercent()+10)));
         zoom.add(item("-10%", () -> applyZoom(settings.getZoomPercent()-10)));
         zoom.add(item("Reset (100%)", () -> applyZoom(100)));
         view.add(zoom);
 
         JMenu linhas = new JMenu("Line spacing");
+        styleMenu(linhas, colors);
         linhas.add(item("More space", () -> { settings.setLineSpacing(settings.getLineSpacing()+2); editor.setLineHeight(settings.getLineSpacing()); editor.repaint(); Storage.saveSettings(settings);} ));
         linhas.add(item("Less space", () -> { settings.setLineSpacing(Math.max(12, settings.getLineSpacing()-2)); editor.setLineHeight(settings.getLineSpacing()); editor.repaint(); Storage.saveSettings(settings);} ));
         view.add(linhas);
 
         JCheckBoxMenuItem onTop = new JCheckBoxMenuItem("Always on top", settings.isAlwaysOnTop());
+        styleMenuItem(onTop, colors);
         onTop.addActionListener(e -> {
             boolean v = onTop.isSelected();
             settings.setAlwaysOnTop(v);
@@ -228,10 +241,12 @@ public class NotesWindow extends JFrame {
 
         // PRIORITY
         JMenu pri = new JMenu("Priority/Color");
+        styleMenu(pri, colors);
         ButtonGroup pg = new ButtonGroup();
         for (String opt : new String[]{"Vermelho","Laranja","Amarelo","Verde","Azul","Roxo","Cinza"}) {
             JRadioButtonMenuItem it = new JRadioButtonMenuItem(opt,
                     opt.equalsIgnoreCase(settings.getPriorityColor()));
+            styleMenuItem(it, colors);
             it.addActionListener(e -> {
                 settings.setPriorityColor(opt.toLowerCase());
                 Storage.saveSettings(settings);
@@ -241,6 +256,7 @@ public class NotesWindow extends JFrame {
         }
 
         JMenu intensidade = new JMenu("Intensity (%)");
+        styleMenu(intensidade, colors);
         intensidade.add(item("+10%", () -> { settings.setColorStrengthPercent(Math.min(100, settings.getColorStrengthPercent()+10)); Storage.saveSettings(settings); repaint(); }));
         intensidade.add(item("-10%", () -> { settings.setColorStrengthPercent(Math.max(40, settings.getColorStrengthPercent()-10)); Storage.saveSettings(settings); repaint(); }));
         intensidade.add(item("Reset (100%)", () -> { settings.setColorStrengthPercent(100); Storage.saveSettings(settings); repaint(); }));
@@ -250,6 +266,7 @@ public class NotesWindow extends JFrame {
 
         // HELP
         JMenu help = new JMenu("Help");
+        styleMenu(help, colors);
         help.add(item("Shortcuts", () -> info("""
                 • Ctrl+S: salvar
                 • View → Theme: alterna tema
@@ -264,6 +281,7 @@ public class NotesWindow extends JFrame {
 
     private JMenuItem item(String text, Runnable r) {
         JMenuItem i = new JMenuItem(text);
+        styleMenuItem(i, UiTheme.menuColors(settings.getTheme()));
         i.addActionListener(e -> r.run());
         return i;
     }
@@ -297,7 +315,9 @@ public class NotesWindow extends JFrame {
     /* ===================== UI helpers ===================== */
 
     private void applyTheme(String theme) {
-        boolean dark = "dark".equalsIgnoreCase(theme);
+        UiTheme.applyLookAndFeel(theme);
+        UiTheme.MenuColors colors = UiTheme.menuColors(theme);
+        boolean dark = UiTheme.isDark(theme);
         if (dark) {
             editor.setBackground(new Color(0x111418));
             editor.setForeground(new Color(0xE8E8E8));
@@ -307,6 +327,8 @@ public class NotesWindow extends JFrame {
         }
         editor.repaint();
         getContentPane().setBackground(dark ? new Color(12,14,18) : new Color(240,242,245));
+        restyleMenuBar(colors);
+        SwingUtilities.updateComponentTreeUI(this);
         repaint();
     }
 
@@ -342,6 +364,39 @@ public class NotesWindow extends JFrame {
     private boolean confirm(String msg){ return JOptionPane.showConfirmDialog(this,msg,"Confirm",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION; }
     private void info(String msg){ JOptionPane.showMessageDialog(this,msg,"Info",JOptionPane.INFORMATION_MESSAGE); }
     private void error(String msg){ JOptionPane.showMessageDialog(this,msg,"Erro",JOptionPane.ERROR_MESSAGE); }
+
+    private void styleMenu(JMenu menu, UiTheme.MenuColors colors) {
+        menu.setOpaque(true);
+        menu.setBackground(colors.background());
+        menu.setForeground(colors.foreground());
+        if (menu.getPopupMenu() != null) {
+            menu.getPopupMenu().setOpaque(true);
+            menu.getPopupMenu().setBackground(colors.background());
+        }
+    }
+
+    private void styleMenuItem(AbstractButton item, UiTheme.MenuColors colors) {
+        item.setOpaque(true);
+        item.setBackground(colors.background());
+        item.setForeground(colors.foreground());
+    }
+
+    private void restyleMenuBar(UiTheme.MenuColors colors) {
+        JMenuBar mb = getJMenuBar();
+        if (mb == null) return;
+        mb.setOpaque(true);
+        mb.setBackground(colors.background());
+        for (MenuElement el : mb.getSubElements()) {
+            if (el instanceof JMenu menu) {
+                styleMenu(menu, colors);
+                for (MenuElement child : menu.getSubElements()) {
+                    if (child instanceof JMenuItem mi) {
+                        styleMenuItem(mi, colors);
+                    }
+                }
+            }
+        }
+    }
 
     /* ===================== API usada pelo App ===================== */
 
