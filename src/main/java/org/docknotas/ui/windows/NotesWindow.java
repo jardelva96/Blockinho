@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class NotesWindow extends JFrame {
 
     private final AppSettings settings;
     private final LineRuledTextArea editor = new LineRuledTextArea();
+    private Runnable onPriorityOrThemeChanged = null;
     private JSlider zoomSlider;
     private JLabel  zoomLabel;
 
@@ -55,15 +57,17 @@ public class NotesWindow extends JFrame {
         super("DockNotas");
         this.settings = settings;
         setUndecorated(true);
+        setBackground(new Color(0,0,0,0));
 
         // >>> único acréscimo: ícone da janela <<<
         setIconImages(loadAppIcons());
 
         // comportamento básico
         setAlwaysOnTop(settings.isAlwaysOnTop());
-        setMinimumSize(new Dimension(200, 250));
+        setMinimumSize(new Dimension(340, 320));
         Dimension saved = settings.getNotePopupSize();
-        if (saved != null) setSize(saved); else setSize(200, 250);
+        if (saved != null) setSize(saved); else setSize(360, 360);
+        updateWindowShape();
 
         // MENU
         setJMenuBar(buildMenuBar());
@@ -136,6 +140,7 @@ public class NotesWindow extends JFrame {
             @Override public void componentResized(ComponentEvent e) {
                 settings.setNotePopupSize(getSize());
                 Storage.saveSettings(settings);
+                updateWindowShape();
             }
         });
 
@@ -251,6 +256,7 @@ public class NotesWindow extends JFrame {
                 settings.setPriorityColor(opt.toLowerCase());
                 Storage.saveSettings(settings);
                 repaint(); // repinta a faixa/borda
+                notifyPriorityOrThemeChanged();
             });
             pg.add(it); pri.add(it);
         }
@@ -330,6 +336,7 @@ public class NotesWindow extends JFrame {
         restyleMenuBar(colors);
         SwingUtilities.updateComponentTreeUI(this);
         repaint();
+        notifyPriorityOrThemeChanged();
     }
 
     private boolean isDarkTheme() {
@@ -396,6 +403,21 @@ public class NotesWindow extends JFrame {
                 }
             }
         }
+    }
+
+    private void updateWindowShape() {
+        if (isUndecorated()) {
+            Shape shape = new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 14, 14);
+            setShape(shape);
+        }
+    }
+
+    public void setOnPriorityOrThemeChanged(Runnable r) {
+        this.onPriorityOrThemeChanged = r;
+    }
+
+    private void notifyPriorityOrThemeChanged() {
+        if (onPriorityOrThemeChanged != null) onPriorityOrThemeChanged.run();
     }
 
     /* ===================== API usada pelo App ===================== */

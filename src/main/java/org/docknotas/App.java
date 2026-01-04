@@ -18,6 +18,7 @@ public class App {
 
             NotesWindow notes = new NotesWindow(settings);
             DockBar dock = new DockBar(notes, settings);
+            notes.setOnPriorityOrThemeChanged(dock::refreshColors);
 
             // fechar = salvar
             notes.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

@@ -65,6 +65,15 @@ public class DockBar {
         bar.setVisible(false); // App decide quando mostrar
     }
 
+    /** Repinta cores de prioridade/intensidade (quando alteradas via menu). */
+    public void refreshColors() {
+        handle.repaint();
+        bar.repaint();
+        if (notes != null && notes.isVisible()) {
+            anchorStackedLayout();
+        }
+    }
+
     /* ===================== API ===================== */
     public void startAccordingToSettings() {
         bar.setVisible(true);
@@ -107,9 +116,8 @@ public class DockBar {
                 bar.setLocation(p.x + e.getX() - start.x, p.y + e.getY() - start.y);
 
                 if (!notes.isVisible()) {
-                    snapCollapsedToEdge();
+                    // não “cola” durante o arrasto para evitar tremido; só ajusta ao soltar
                 } else {
-                    updateOrientationByPosition();
                     anchorPopup();
                 }
 
@@ -117,7 +125,12 @@ public class DockBar {
                 Storage.saveSettings(settings);
             }
             @Override public void mouseReleased(MouseEvent e) {
-                if (!notes.isVisible()) snapCollapsedToEdge();
+                if (!notes.isVisible()) {
+                    snapCollapsedToEdge();
+                } else {
+                    updateOrientationByPosition();
+                    anchorPopup();
+                }
                 settings.setBarLocation(bar.getLocation());
                 Storage.saveSettings(settings);
             }
@@ -219,7 +232,7 @@ public class DockBar {
     }
 
     private void updateOrientationByPosition() {
-        Point p = bar.getLocation(); Rectangle s = screenBounds(); int margin = 30;
+        Point p = bar.getLocation(); Rectangle s = screenBounds(); int margin = 80;
         String o = "horizontal";
         if (p.x <= s.x + margin || p.x + bar.getWidth() >= s.x + s.width - margin) o = "vertical";
         setOrientation(o);
