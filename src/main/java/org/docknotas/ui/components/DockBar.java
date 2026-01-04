@@ -56,13 +56,25 @@ public class DockBar {
         bar.pack();
 
         // posição inicial
-        if (settings.getBarLocation() != null) bar.setLocation(settings.getBarLocation());
-        else positionNearTaskbar();
+        if (settings.getBarLocation() != null) {
+            bar.setLocation(settings.getBarLocation());
+        } else {
+            positionTopCenter();
+        }
 
         setOrientation(settings.getBarOrientation());
         hookMouse();
 
         bar.setVisible(false); // App decide quando mostrar
+    }
+
+    /** Repinta cores de prioridade/intensidade (quando alteradas via menu). */
+    public void refreshColors() {
+        handle.repaint();
+        bar.repaint();
+        if (notes != null && notes.isVisible()) {
+            anchorStackedLayout();
+        }
     }
 
     /* ===================== API ===================== */
@@ -107,9 +119,8 @@ public class DockBar {
                 bar.setLocation(p.x + e.getX() - start.x, p.y + e.getY() - start.y);
 
                 if (!notes.isVisible()) {
-                    snapCollapsedToEdge();
+                    // não “cola” durante o arrasto para evitar tremido; só ajusta ao soltar
                 } else {
-                    updateOrientationByPosition();
                     anchorPopup();
                 }
 
@@ -117,7 +128,12 @@ public class DockBar {
                 Storage.saveSettings(settings);
             }
             @Override public void mouseReleased(MouseEvent e) {
-                if (!notes.isVisible()) snapCollapsedToEdge();
+                if (!notes.isVisible()) {
+                    snapCollapsedToEdge();
+                } else {
+                    updateOrientationByPosition();
+                    anchorPopup();
+                }
                 settings.setBarLocation(bar.getLocation());
                 Storage.saveSettings(settings);
             }
@@ -169,9 +185,9 @@ public class DockBar {
             px = atRight ? b.x - notes.getWidth() - 8 : b.x + bar.getWidth() + 8;
             py = clamp(s.y + in.top + 8, b.y, s.y + s.height - notes.getHeight() - in.bottom - 8);
         } else {
-            boolean bottom = b.y + bar.getHeight() > s.y + s.height - 60 - in.bottom;
             px = clamp(s.x + in.left + 8, b.x, s.x + s.width - notes.getWidth() - in.right - 8);
-            py = bottom ? b.y - notes.getHeight() - 8 : b.y + bar.getHeight() + 8;
+            py = Math.min(s.y + s.height - in.bottom - notes.getHeight() - 8, b.y + bar.getHeight() + 8);
+            py = Math.max(s.y + in.top + 8, py);
         }
         notes.setLocation(px, py);
     }
@@ -200,10 +216,10 @@ public class DockBar {
         }
     }
 
-    private void positionNearTaskbar() {
+    private void positionTopCenter() {
         Rectangle s = screenBounds(); Insets in = screenInsets();
-        int x = s.x + s.width - sizeH.width - 12 - in.right;
-        int y = s.y + s.height - sizeH.height - 12 - in.bottom;
+        int x = s.x + (s.width - sizeH.width) / 2;
+        int y = s.y + in.top + 6;
         bar.setLocation(x, y);
         settings.setBarLocation(new Point(x,y));
         Storage.saveSettings(settings);
@@ -219,7 +235,7 @@ public class DockBar {
     }
 
     private void updateOrientationByPosition() {
-        Point p = bar.getLocation(); Rectangle s = screenBounds(); int margin = 30;
+        Point p = bar.getLocation(); Rectangle s = screenBounds(); int margin = 80;
         String o = "horizontal";
         if (p.x <= s.x + margin || p.x + bar.getWidth() >= s.x + s.width - margin) o = "vertical";
         setOrientation(o);

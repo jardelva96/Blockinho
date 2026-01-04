@@ -61,7 +61,7 @@ public class BlockinhoFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setAlwaysOnTop(settings.isAlwaysOnTop());
-        UiTheme.applyGlobalMenuHoverTheme(); // hover consistente
+        UiTheme.applyLookAndFeel(settings.getTheme());
         getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.TRUE);
 
         // tamanho/pos inicial
@@ -142,7 +142,9 @@ public class BlockinhoFrame extends JFrame {
     }
 
     public void applyTheme(String themeName) {
-        boolean light = "light".equalsIgnoreCase(themeName);
+        UiTheme.applyLookAndFeel(themeName);
+        UiTheme.MenuColors colors = UiTheme.menuColors(themeName);
+        boolean light = !UiTheme.isDark(themeName);
         if (light) {
             textArea.setBackground(new Color(0xFAFAFA));
             textArea.setForeground(Color.DARK_GRAY);
@@ -150,8 +152,12 @@ public class BlockinhoFrame extends JFrame {
             textArea.setBackground(new Color(0x111418));
             textArea.setForeground(new Color(0xE8E8E8));
         }
+        if (getJMenuBar() != null) {
+            getJMenuBar().setBackground(colors.background());
+        }
         card.repaint();
         textArea.repaint();
+        SwingUtilities.updateComponentTreeUI(this);
     }
 
     public void applyFontAndZoom() {
