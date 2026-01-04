@@ -1,4 +1,5 @@
 # DockNotas (Blockinho)
+![Blockinho Logo](./blockinho.png)
 
 Um bloco de notas flutuante, leve e sempre-à-mão (Windows/Mac/Linux).  
 Feito em **Java 17 + Swing** com tema moderno **FlatLaf**.
