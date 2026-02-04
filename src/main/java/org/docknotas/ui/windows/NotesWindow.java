@@ -3,6 +3,8 @@ package org.docknotas.ui.windows;
 import org.docknotas.settings.AppSettings;
 import org.docknotas.storage.Storage;
 import org.docknotas.ui.components.LineRuledTextArea;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,15 +15,21 @@ import java.util.List;
 
 /**
  * Janela única com menu + editor de notas.
- * - Tema dark/light
- * - Fonte base + Zoom (%)
- * - Espaçamento de linhas
+ * 
+ * Características:
+ * - Tema dark/light com FlatLaf
+ * - Fonte base configurável + Zoom (%)
+ * - Espaçamento de linhas ajustável
  * - Cor de prioridade (borda/faixa) + intensidade
- * - Persistência de conteúdo e tamanho
- * - Atalho Ctrl+S para salvar
+ * - Persistência automática de conteúdo e tamanho
+ * - Atalho Ctrl+S para salvar manualmente
+ * - Janela sem decoração nativa (undecorated)
+ * - Sempre no topo (configurável)
  */
 public class NotesWindow extends JFrame {
 
+    private static final Logger logger = LoggerFactory.getLogger(NotesWindow.class);
+    
     private final AppSettings settings;
     private final LineRuledTextArea editor = new LineRuledTextArea();
     private JSlider zoomSlider;
@@ -52,6 +60,9 @@ public class NotesWindow extends JFrame {
 
     public NotesWindow(AppSettings settings) {
         super("DockNotas");
+        if (settings == null) {
+            throw new IllegalArgumentException("AppSettings não pode ser null");
+        }
         this.settings = settings;
         setUndecorated(true);
 
@@ -73,12 +84,25 @@ public class NotesWindow extends JFrame {
         editor.setRequestFocusEnabled(true);
         editor.setLineWrap(true);
         editor.setWrapStyleWord(true);
-        editor.setText(Storage.loadNotes());
+        
+        try {
+            editor.setText(Storage.loadNotes());
+        } catch (Exception e) {
+            logger.error("Erro ao carregar notas", e);
+            editor.setText("");
+        }
+        
         editor.setLineHeight(settings.getLineSpacing());
         editor.setFont(editor.getFont().deriveFont(effectiveFont()));
 
         // Salva automaticamente ao digitar
-        editor.addCaretListener(e -> Storage.saveNotes(editor.getText()));
+        editor.addCaretListener(e -> {
+            try {
+                Storage.saveNotes(editor.getText());
+            } catch (Exception ex) {
+                logger.error("Erro ao salvar notas automaticamente", ex);
+            }
+        });
 
         // Atalho Ctrl+S
         bindSaveAccelerator(editor);

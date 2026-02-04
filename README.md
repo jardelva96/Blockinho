@@ -176,3 +176,22 @@ Commit: git commit -m "feat: minha ideia"
 Push: git push origin feature/minha-ideia
 
 Abra Pull Request
+
+📝 Melhorias Recentes
+✅ Logging estruturado com SLF4J para debugging
+✅ Tratamento robusto de exceções e validações
+✅ Testes unitários para AppSettings e Storage
+✅ Ícones multiplataforma (Windows, macOS, Linux)
+✅ JavaDoc completo para classes principais
+✅ Validação de entrada com null checks
+✅ Constantes para valores "mágicos"
+✅ Mensagens de erro detalhadas
+✅ Backup automático com timestamp
+
+🛠️ Tecnologias
+Java 17 - Linguagem de programação
+Swing - Interface gráfica
+FlatLaf - Look and Feel moderno
+Gradle - Build e gerenciamento de dependências
+SLF4J - Logging estruturado
+JUnit 5 - Framework de testes

@@ -5,9 +5,27 @@ import java.awt.*;
 /**
  * Preferências do DockNotas.
  * Persistidas via Storage (settings.properties).
+ * 
+ * Esta classe contém todas as configurações do aplicativo:
+ * - Comportamento da janela (sempre no topo, iniciar minimizado)
+ * - Aparência (tema, fonte, espaçamento)
+ * - Zoom e cores
+ * - Posição e tamanho das janelas
  */
 public class AppSettings {
 
+    /* ---------- Constantes ---------- */
+    private static final int MIN_FONT_SIZE = 10;
+    private static final int MAX_FONT_SIZE = 36;
+    private static final int MIN_LINE_SPACING = 12;
+    private static final int MAX_LINE_SPACING = 40;
+    private static final int MIN_ZOOM = 50;
+    private static final int MAX_ZOOM = 200;
+    private static final int MIN_COLOR_STRENGTH = 40;
+    private static final int MAX_COLOR_STRENGTH = 100;
+    private static final int MIN_WINDOW_WIDTH = 200;
+    private static final int MIN_WINDOW_HEIGHT = 160;
+    
     /* ---------- Gerais ---------- */
     private boolean alwaysOnTop    = true;
     private boolean startMinimized = true;      // iniciar só com a janela visível? (UI decide)
@@ -55,18 +73,18 @@ public class AppSettings {
     }
 
     public int getFontSize() { return fontSize; }
-    public void setFontSize(int v) { fontSize = clamp(v, 10, 36); }
+    public void setFontSize(int v) { fontSize = clamp(v, MIN_FONT_SIZE, MAX_FONT_SIZE); }
 
     public int getLineSpacing() { return lineSpacing; }
-    public void setLineSpacing(int v) { lineSpacing = clamp(v, 12, 40); }
+    public void setLineSpacing(int v) { lineSpacing = clamp(v, MIN_LINE_SPACING, MAX_LINE_SPACING); }
 
     /** Zoom em % (50..200). */
     public int getZoomPercent() { return zoomPercent; }
-    public void setZoomPercent(int v) { zoomPercent = clamp(v, 50, 200); }
+    public void setZoomPercent(int v) { zoomPercent = clamp(v, MIN_ZOOM, MAX_ZOOM); }
 
     /** Intensidade da cor em % (40..100). */
     public int getColorStrengthPercent() { return colorStrengthPercent; }
-    public void setColorStrengthPercent(int v) { colorStrengthPercent = clamp(v, 40, 100); }
+    public void setColorStrengthPercent(int v) { colorStrengthPercent = clamp(v, MIN_COLOR_STRENGTH, MAX_COLOR_STRENGTH); }
 
     /** Prioridade/cor (compat). */
     public String getPriorityColor() { return priorityColor; }
@@ -79,8 +97,14 @@ public class AppSettings {
     public void setNoteWindowLocation(Point p) { noteWindowLocation = p; }
 
     public Dimension getNoteWindowSize() { return noteWindowSize; }
+    /**
+     * Define o tamanho da janela de notas (legado).
+     * Mantém validação original por compatibilidade, mas MIN_WINDOW_WIDTH/HEIGHT
+     * são as constantes recomendadas para novos usos.
+     */
     public void setNoteWindowSize(Dimension d) {
         if (d != null) {
+            // Mantém valores originais por compatibilidade
             int w = Math.max(240, d.width);
             int h = Math.max(160, d.height);
             noteWindowSize = new Dimension(w, h);
@@ -101,8 +125,8 @@ public class AppSettings {
     public Dimension getNotePopupSize() { return notePopupSize; }
     public void setNotePopupSize(Dimension d) {
         if (d != null) {
-            int w = Math.max(200, d.width);
-            int h = Math.max(160, d.height);
+            int w = Math.max(MIN_WINDOW_WIDTH, d.width);
+            int h = Math.max(MIN_WINDOW_HEIGHT, d.height);
             notePopupSize = new Dimension(w, h);
         }
     }

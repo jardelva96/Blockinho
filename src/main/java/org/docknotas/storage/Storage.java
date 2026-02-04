@@ -1,6 +1,8 @@
 package org.docknotas.storage;
 
 import org.docknotas.settings.AppSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.*;
@@ -9,25 +11,59 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-/** Persistência simples via arquivos na pasta ~/.docknotas */
+/**
+ * Persistência simples via arquivos na pasta ~/.docknotas
+ * Gerencia configurações, notas e backups do aplicativo.
+ */
 public class Storage {
 
-    private static final String APP_DIR = System.getProperty("user.home")
-            + File.separator + ".docknotas";
+    private static final Logger logger = LoggerFactory.getLogger(Storage.class);
+    private static final String APP_DIR_NAME = ".docknotas";
+    private static final String SETTINGS_FILENAME = "settings.properties";
+    private static final String NOTES_FILENAME = "notes.txt";
+    private static final String BACKUP_DIR_NAME = "backups";
 
-    private static final Path SETTINGS_FILE = Path.of(APP_DIR, "settings.properties");
-    private static final Path NOTES_FILE    = Path.of(APP_DIR, "notes.txt");
-    private static final Path BACKUP_DIR    = Path.of(APP_DIR, "backups");
+    private static final String APP_DIR = System.getProperty("user.home")
+            + File.separator + APP_DIR_NAME;
+
+    private static final Path SETTINGS_FILE = Path.of(APP_DIR, SETTINGS_FILENAME);
+    private static final Path NOTES_FILE    = Path.of(APP_DIR, NOTES_FILENAME);
+    private static final Path BACKUP_DIR    = Path.of(APP_DIR, BACKUP_DIR_NAME);
 
     /* ---------------------------- infra ---------------------------- */
 
+    /**
+     * Garante que os diretórios necessários existam.
+     * Cria ~/.docknotas e ~/.docknotas/backups se não existirem.
+     */
     public static void ensureDirs() {
-        new File(APP_DIR).mkdirs();
-        new File(BACKUP_DIR.toString()).mkdirs();
+        try {
+            File appDir = new File(APP_DIR);
+            if (!appDir.exists()) {
+                boolean created = appDir.mkdirs();
+                if (created) {
+                    logger.info("Diretório da aplicação criado: {}", APP_DIR);
+                }
+            }
+            
+            File backupDir = new File(BACKUP_DIR.toString());
+            if (!backupDir.exists()) {
+                boolean created = backupDir.mkdirs();
+                if (created) {
+                    logger.info("Diretório de backups criado: {}", BACKUP_DIR);
+                }
+            }
+        } catch (SecurityException e) {
+            logger.error("Erro ao criar diretórios da aplicação", e);
+        }
     }
 
     /* ------------------------ settings (load/save) ------------------------ */
 
+    /**
+     * Carrega as configurações do arquivo settings.properties.
+     * @return AppSettings com as configurações carregadas ou valores padrão
+     */
     public static AppSettings loadSettings() {
         ensureDirs();
         AppSettings s = new AppSettings();
@@ -36,7 +72,12 @@ public class Storage {
         if (Files.exists(SETTINGS_FILE)) {
             try (InputStream in = Files.newInputStream(SETTINGS_FILE)) {
                 p.load(in);
-            } catch (IOException ignored) {}
+                logger.debug("Configurações carregadas de: {}", SETTINGS_FILE);
+            } catch (IOException e) {
+                logger.warn("Erro ao carregar configurações, usando valores padrão", e);
+            }
+        } else {
+            logger.info("Arquivo de configurações não encontrado, usando valores padrão");
         }
 
         // Gerais
@@ -79,7 +120,16 @@ public class Storage {
         return s;
     }
 
+    /**
+     * Salva as configurações no arquivo settings.properties.
+     * @param s AppSettings a serem salvas
+     */
     public static void saveSettings(AppSettings s) {
+        if (s == null) {
+            logger.warn("Tentativa de salvar configurações nulas");
+            return;
+        }
+        
         ensureDirs();
         Properties p = new Properties();
 
@@ -113,53 +163,106 @@ public class Storage {
 
         try (OutputStream out = Files.newOutputStream(SETTINGS_FILE)) {
             p.store(out, "DockNotas settings");
-        } catch (IOException ignored) {}
+            logger.debug("Configurações salvas em: {}", SETTINGS_FILE);
+        } catch (IOException e) {
+            logger.error("Erro ao salvar configurações", e);
+        }
     }
 
     /* --------------------------- notas (txt) --------------------------- */
 
+    /**
+     * Carrega o conteúdo das notas do arquivo notes.txt.
+     * @return String com o conteúdo das notas ou string vazia se não existir
+     */
     public static String loadNotes() {
         ensureDirs();
         try {
             if (!Files.exists(NOTES_FILE)) {
                 Files.writeString(NOTES_FILE, "", StandardCharsets.UTF_8);
+                logger.info("Arquivo de notas criado: {}", NOTES_FILE);
             }
-            return Files.readString(NOTES_FILE, StandardCharsets.UTF_8);
+            String content = Files.readString(NOTES_FILE, StandardCharsets.UTF_8);
+            logger.debug("Notas carregadas: {} caracteres", content.length());
+            return content;
         } catch (IOException e) {
+            logger.error("Erro ao carregar notas", e);
             return "";
         }
     }
 
+    /**
+     * Salva o conteúdo das notas no arquivo notes.txt.
+     * @param text String com o conteúdo a ser salvo (null será tratado como string vazia)
+     */
     public static void saveNotes(String text) {
         ensureDirs();
+        String content = (text == null) ? "" : text;
         try {
-            Files.writeString(NOTES_FILE, text == null ? "" : text, StandardCharsets.UTF_8);
-        } catch (IOException ignored) {}
+            Files.writeString(NOTES_FILE, content, StandardCharsets.UTF_8);
+            logger.debug("Notas salvas: {} caracteres", content.length());
+        } catch (IOException e) {
+            logger.error("Erro ao salvar notas", e);
+        }
     }
 
+    /**
+     * Exporta as notas para um arquivo especificado.
+     * @param file Arquivo de destino
+     * @throws IOException se ocorrer erro na exportação
+     */
     public static void exportTo(File file) throws IOException {
         ensureDirs();
-        if (file == null) return;
+        if (file == null) {
+            throw new IllegalArgumentException("Arquivo de destino não pode ser null");
+        }
         Files.copy(NOTES_FILE, file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        logger.info("Notas exportadas para: {}", file.getAbsolutePath());
     }
 
+    /**
+     * Importa notas de um arquivo especificado.
+     * @param file Arquivo de origem
+     * @throws IOException se ocorrer erro na importação
+     */
     public static void importFrom(File file) throws IOException {
         ensureDirs();
-        if (file == null) return;
+        if (file == null) {
+            throw new IllegalArgumentException("Arquivo de origem não pode ser null");
+        }
+        if (!file.exists()) {
+            throw new FileNotFoundException("Arquivo não encontrado: " + file.getAbsolutePath());
+        }
         String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
         saveNotes(content);
+        logger.info("Notas importadas de: {}", file.getAbsolutePath());
     }
 
+    /**
+     * Retorna o diretório onde as notas são armazenadas.
+     * @return File representando o diretório ~/.docknotas
+     */
     public static File notesFolder() {
         return new File(APP_DIR);
     }
 
+    /**
+     * Cria um backup das notas atuais com timestamp.
+     * O backup é salvo em ~/.docknotas/backups/notes-{timestamp}.txt
+     */
     public static void backupNow() {
         ensureDirs();
         String fname = "notes-" + System.currentTimeMillis() + ".txt";
         try {
-            Files.copy(NOTES_FILE, BACKUP_DIR.resolve(fname));
-        } catch (IOException ignored) {}
+            if (Files.exists(NOTES_FILE)) {
+                Files.copy(NOTES_FILE, BACKUP_DIR.resolve(fname));
+                logger.info("Backup criado: {}", fname);
+            } else {
+                logger.warn("Arquivo de notas não existe, backup não criado");
+            }
+        } catch (IOException e) {
+            logger.error("Erro ao criar backup", e);
+        }
     }
 
     /* ----------------------------- util ----------------------------- */
