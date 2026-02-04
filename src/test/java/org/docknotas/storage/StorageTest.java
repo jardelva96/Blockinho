@@ -152,7 +152,9 @@ class StorageTest {
         Storage.saveNotes("Teste de múltiplos backups");
         
         Storage.backupNow();
-        Thread.sleep(10); // Pequena pausa para garantir timestamp diferente
+        // Pequena pausa para garantir timestamp diferente entre backups
+        // Necessário pois o nome do arquivo usa System.currentTimeMillis()
+        Thread.sleep(50); // 50ms é suficiente para diferentes timestamps
         Storage.backupNow();
         
         // Verificar que foram criados arquivos de backup
@@ -161,6 +163,6 @@ class StorageTest {
         
         File[] backups = backupDir.listFiles((dir, name) -> name.startsWith("notes-") && name.endsWith(".txt"));
         assertNotNull(backups);
-        assertTrue(backups.length >= 2);
+        assertTrue(backups.length >= 2, "Deve ter pelo menos 2 arquivos de backup");
     }
 }

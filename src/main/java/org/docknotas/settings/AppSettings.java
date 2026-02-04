@@ -97,10 +97,16 @@ public class AppSettings {
     public void setNoteWindowLocation(Point p) { noteWindowLocation = p; }
 
     public Dimension getNoteWindowSize() { return noteWindowSize; }
+    /**
+     * Define o tamanho da janela de notas (legado).
+     * Mantém validação original por compatibilidade, mas MIN_WINDOW_WIDTH/HEIGHT
+     * são as constantes recomendadas para novos usos.
+     */
     public void setNoteWindowSize(Dimension d) {
         if (d != null) {
-            int w = Math.max(MIN_WINDOW_WIDTH, d.width);
-            int h = Math.max(MIN_WINDOW_HEIGHT, d.height);
+            // Mantém valores originais por compatibilidade
+            int w = Math.max(240, d.width);
+            int h = Math.max(160, d.height);
             noteWindowSize = new Dimension(w, h);
         }
     }
